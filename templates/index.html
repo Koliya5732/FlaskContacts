@@ -1,0 +1,306 @@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Contacts Manager</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            font-family: Arial, sans-serif;
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        header h1 {
+            color: #2563eb;
+            margin-bottom: 8px;
+        }
+
+        .panel {
+            background: white;
+            padding: 25px;
+            margin-bottom: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        h2 {
+            margin-top: 0;
+            font-size: 21px;
+        }
+
+        input {
+            width: 100%;
+            padding: 12px;
+            margin-bottom: 12px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        input:focus {
+            outline: 2px solid #93c5fd;
+            border-color: #2563eb;
+        }
+
+        button {
+            padding: 11px 18px;
+            border: none;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+        }
+
+        .add-button {
+            background: #2563eb;
+            color: white;
+        }
+
+        .add-button:hover {
+            background: #1d4ed8;
+        }
+
+        .search-button {
+            background: #0f766e;
+            color: white;
+        }
+
+        .delete-button {
+            background: #dc2626;
+            color: white;
+        }
+
+        .search-form {
+            display: flex;
+            gap: 10px;
+        }
+
+        .search-form input {
+            margin-bottom: 0;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            padding: 13px;
+            border-bottom: 1px solid #e2e8f0;
+            text-align: left;
+        }
+
+        th {
+            background: #f8fafc;
+        }
+
+        .message {
+            padding: 12px;
+            margin-bottom: 12px;
+            border-radius: 7px;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .empty {
+            text-align: center;
+            color: #64748b;
+            padding: 25px;
+        }
+
+        footer {
+            text-align: center;
+            color: #94a3b8;
+            margin-top: 30px;
+            font-size: 13px;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+
+            .search-form {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <header>
+        <h1>Contacts Manager</h1>
+        <p>Управление контактами</p>
+    </header>
+
+    <!-- Сообщения -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for category, message in messages %}
+            <div class="message {{ category }}">
+                {{ message }}
+            </div>
+        {% endfor %}
+    {% endwith %}
+
+    <!-- Добавление контакта -->
+    <section class="panel">
+        <h2>Добавить контакт</h2>
+
+        <form action="{{ url_for('add_contact') }}" method="POST">
+
+            <input
+                type="text"
+                name="name"
+                placeholder="Имя"
+                minlength="2"
+                required
+            >
+
+            <input
+                type="tel"
+                name="phone"
+                placeholder="Номер телефона"
+                required
+            >
+
+            <input
+                type="email"
+                name="email"
+                placeholder="Email"
+                required
+            >
+
+            <button type="submit" class="add-button">
+                Добавить контакт
+            </button>
+
+        </form>
+    </section>
+
+    <!-- Поиск -->
+    <section class="panel">
+        <h2>Поиск контактов</h2>
+
+        <form action="{{ url_for('index') }}" method="GET"
+              class="search-form">
+
+            <input
+                type="text"
+                name="q"
+                placeholder="Имя или номер телефона"
+                value="{{ query }}"
+            >
+
+            <button type="submit" class="search-button">
+                Найти
+            </button>
+
+        </form>
+    </section>
+
+    <!-- Список контактов -->
+    <section class="panel">
+
+        <h2>Список контактов ({{ contacts|length }})</h2>
+
+        <div class="table-wrapper">
+
+            {% if contacts %}
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Имя</th>
+                            <th>Телефон</th>
+                            <th>Email</th>
+                            <th>Действие</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+
+                        {% for contact in contacts %}
+
+                            <tr>
+                                <td>{{ contact.id }}</td>
+                                <td>{{ contact.name }}</td>
+                                <td>{{ contact.phone }}</td>
+                                <td>{{ contact.email }}</td>
+
+                                <td>
+                                    <form
+                                        action="{{ url_for('delete_contact', contact_id=contact.id) }}"
+                                        method="POST"
+                                        onsubmit="return confirm('Удалить этот контакт?');"
+                                    >
+                                        <button
+                                            type="submit"
+                                            class="delete-button"
+                                        >
+                                            Удалить
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                        {% endfor %}
+
+                    </tbody>
+                </table>
+
+            {% else %}
+
+                <div class="empty">
+                    Контакты не найдены.
+                </div>
+
+            {% endif %}
+
+        </div>
+
+    </section>
+
+    <footer>
+        Contacts Manager 1.0 | Flask Project
+    </footer>
+
+</div>
+
+</body>
+</html>
